@@ -1,9 +1,13 @@
 from django.shortcuts import render
-from django.contrib.auth.models import User
+from rest_framework import generics, permissions
+from django.contrib.auth import get_user_model
 from rest_framework import generics
 from .serializers import UserSerializer, NoteSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Note
+from rest_framework.exceptions import PermissionDenied
+
+User = get_user_model()
 
 class NoteListCreate(generics.ListCreateAPIView):
     serializer_class = NoteSerializer
@@ -28,9 +32,34 @@ class NoteDelete(generics.DestroyAPIView):
         return Note.objects.filter(author=user)
     
     
-
 # Create your views here.
 class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [AllowAny] 
+
+class UserListView(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role != 'admin':
+            raise PermissionDenied("Only admins can view the user list.")
+        return super().get_queryset()
+
+class UserUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        obj = super().get_object()
+
+        if self.request.user.role == 'admin':
+            return obj
+
+        if obj.id == self.request.user.id:
+            return obj
+
+        raise PermissionDenied("You are not allowed to update this user.")
