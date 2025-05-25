@@ -7,7 +7,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "password", "date_joined", "is_active"]
+        fields = ["id", "username", "first_name", "last_name", "password", "date_joined", "is_active", "is_staff"]
         extra_kwargs = {
             "password": {"write_only": True},
             "is_active": {"read_only": True},
@@ -27,7 +27,7 @@ def update(self, instance, validated_data):
 
     if request and request.user.is_staff:
         # Allow staff users to update is_active or other admin-level fields if needed
-        is_active = validated_data.pop('is_active', None)
+        is_active = validated_data.pop('is_staff', None)
         if is_active is not None:
             instance.is_active = is_active
 
