@@ -7,7 +7,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "password", "role", "date_joined", "is_active"]
+        fields = ["id", "username", "first_name", "last_name", "password", "date_joined", "is_active"]
         extra_kwargs = {
             "password": {"write_only": True},
             "is_active": {"read_only": True},
@@ -20,21 +20,23 @@ class UserSerializer(serializers.ModelSerializer):
         return user
     
 
-    def update(self, instance, validated_data):
-        validated_data.pop('password', None)
+def update(self, instance, validated_data):
+    validated_data.pop('password', None)
 
-        request = self.context.get('request')
+    request = self.context.get('request')
 
-        if request and request.user.role == 'admin':
-            role = validated_data.pop('role', None)
-            if role:
-                instance.role = role
+    if request and request.user.is_staff:
+        # Allow staff users to update is_active or other admin-level fields if needed
+        is_active = validated_data.pop('is_active', None)
+        if is_active is not None:
+            instance.is_active = is_active
 
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+    for attr, value in validated_data.items():
+        setattr(instance, attr, value)
 
-        instance.save()
-        return instance
+    instance.save()
+    return instance
+
     
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:

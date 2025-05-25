@@ -44,9 +44,10 @@ class UserListView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.role != 'admin':
-            raise PermissionDenied("Only admins can view the user list.")
+        if not self.request.user.is_staff:
+            raise PermissionDenied("Only staff users can view the user list.")
         return super().get_queryset()
+
 
 class UserUpdateView(generics.RetrieveUpdateAPIView):
     queryset = User.objects.all()
@@ -56,10 +57,17 @@ class UserUpdateView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         obj = super().get_object()
 
-        if self.request.user.role == 'admin':
+        if self.request.user.is_staff:
             return obj
 
         if obj.id == self.request.user.id:
             return obj
 
         raise PermissionDenied("You are not allowed to update this user.")
+
+class AuthUserDetailView(generics.RetrieveAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user

@@ -1,0 +1,13 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# SQLite DB (if you don’t want it in Git)
+db.sqlite3
+
+# Virtual environment (if under the repo)
+env/
+venv/
