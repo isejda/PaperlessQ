@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Note
+from .models import Note, Services
 
 User = get_user_model()
 
@@ -45,3 +45,8 @@ class NoteSerializer(serializers.ModelSerializer):
         extra_kwargs = {"author": {"read_only": True}}
         
         
+class ServicesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Services
+        fields = ["id", "title", "content", "created_at", "service_provider"]
+        extra_kwargs = {"service_provider": {"read_only": True}}

@@ -2,9 +2,10 @@ from django.shortcuts import render
 from rest_framework import generics, permissions
 from django.contrib.auth import get_user_model
 from rest_framework import generics
-from .serializers import UserSerializer, NoteSerializer
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note
+from .serializers import UserSerializer, NoteSerializer, ServicesSerializer
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from .models import Note, Services
+from .permissions import IsServiceProviderOrReadOnly
 from rest_framework.exceptions import PermissionDenied
 
 User = get_user_model()
@@ -71,3 +72,27 @@ class AuthUserDetailView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+    
+
+class ServiceCreateView(generics.CreateAPIView):
+    queryset = Services.objects.all()
+    serializer_class = ServicesSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def perform_create(self, serializer):
+        serializer.save(service_provider=self.request.user)
+
+class ServiceListView(generics.ListAPIView):
+    serializer_class = ServicesSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Services.objects.filter(service_provider=user)
+        return Services.objects.all()
+    
+class ServiceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Services.objects.all()
+    serializer_class = ServicesSerializer
+    permission_classes = [permissions.IsAuthenticated, IsServiceProviderOrReadOnly]
