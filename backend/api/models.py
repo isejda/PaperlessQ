@@ -19,3 +19,12 @@ class Services(models.Model):
 
     def __str__(self):
         return self.title
+    
+class ServiceQueue(models.Model):
+    service = models.ForeignKey(Services, on_delete=models.CASCADE, related_name='queue_entries')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('service', 'user')
+        ordering = ['joined_at']

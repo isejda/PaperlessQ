@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Note, Services
+from .models import Note, Services, ServiceQueue
 
 User = get_user_model()
 
@@ -44,9 +44,42 @@ class NoteSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "content", "created_at", "author"]
         extra_kwargs = {"author": {"read_only": True}}
         
-        
+    
+
+class ServiceQueueSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+
+    class Meta:
+        model = ServiceQueue
+        fields = ['user', 'joined_at']
+
+
 class ServicesSerializer(serializers.ModelSerializer):
+    queue_entries = serializers.SerializerMethodField()
+    now_serving = serializers.SerializerMethodField()
+
     class Meta:
         model = Services
-        fields = ["id", "title", "content", "created_at", "service_provider"]
+        fields = ['id', 'title', 'content', 'service_provider', 'queue_entries', 'now_serving', 'created_at']
         extra_kwargs = {"service_provider": {"read_only": True}}
+
+    def get_queue_entries(self, obj):
+        return [
+            {
+                'user_id': entry.user.id,
+                'user': entry.user.username,
+                'joined_at': entry.joined_at
+            }
+            for entry in obj.queue_entries.order_by('joined_at')
+        ]
+
+    def get_now_serving(self, obj):
+        first_entry = obj.queue_entries.order_by('joined_at').first()
+        if first_entry:
+            return {
+                'user_id': first_entry.user.id,
+                'username': first_entry.user.username,
+                'joined_at': first_entry.joined_at
+            }
+        return None
+

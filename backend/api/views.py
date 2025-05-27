@@ -1,12 +1,15 @@
 from django.shortcuts import render
 from rest_framework import generics, permissions
 from django.contrib.auth import get_user_model
-from rest_framework import generics
-from .serializers import UserSerializer, NoteSerializer, ServicesSerializer
+from rest_framework import generics, status
+from .serializers import UserSerializer, NoteSerializer, ServicesSerializer, ServiceQueueSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from .models import Note, Services
+from .models import Note, Services, ServiceQueue
 from .permissions import IsServiceProviderOrReadOnly
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 
 User = get_user_model()
 
@@ -66,6 +69,16 @@ class UserUpdateView(generics.RetrieveUpdateAPIView):
 
         raise PermissionDenied("You are not allowed to update this user.")
 
+class UserDestroyView(generics.DestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"detail": f"User {instance.username} has been deleted."}, status=status.HTTP_204_NO_CONTENT)
+
 class AuthUserDetailView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -96,3 +109,48 @@ class ServiceDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Services.objects.all()
     serializer_class = ServicesSerializer
     permission_classes = [permissions.IsAuthenticated, IsServiceProviderOrReadOnly]
+
+class QueueServiceView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        service = get_object_or_404(Services, pk=pk)
+
+        # Check if already queued
+        if ServiceQueue.objects.filter(service=service, user=request.user).exists():
+            return Response({"detail": "You are already in the queue."}, status=status.HTTP_400_BAD_REQUEST)
+
+        ServiceQueue.objects.create(service=service, user=request.user)
+        return Response({"detail": "You have joined the queue."}, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        service = get_object_or_404(Services, pk=pk)
+
+        first_in_queue = ServiceQueue.objects.filter(service=service).order_by('joined_at').first()
+        if not first_in_queue:
+            return Response({"detail": "The queue is empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+        first_in_queue.delete()
+        return Response({"detail": f"The user {first_in_queue.user.username} is served and removed from the queue."}, status=status.HTTP_200_OK)
+    
+
+
+class LeaveQueueView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, pk):
+        service = get_object_or_404(Services, pk=pk)
+
+        # Check if user is even in the queue
+        user_entry = ServiceQueue.objects.filter(service=service, user=request.user).first()
+        if not user_entry:
+            return Response({"detail": "You are not in the queue."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if the user is the one currently being served
+        first_in_queue = ServiceQueue.objects.filter(service=service).order_by('joined_at').first()
+        if first_in_queue and first_in_queue.user == request.user:
+            return Response({"detail": "You cannot leave the queue while being served."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Remove user from the queue
+        user_entry.delete()
+        return Response({"detail": "You have left the queue."}, status=status.HTTP_200_OK)
