@@ -15,4 +15,7 @@ urlpatterns = [
     path('services/<int:pk>/', views.ServiceDetailView.as_view(), name='service-detail'),
     path('services/<int:pk>/queue/', views.QueueServiceView.as_view(), name='service-queue'),
     path('services/<int:pk>/queue/leave/', views.LeaveQueueView.as_view(), name='service-leave-queue'),
+
+    path('notifications/', views.NotificationListView.as_view(), name='notification-list'),
+    path('notifications/<int:pk>/mark-read/', views.NotificationMarkReadView.as_view(), name='notification-mark-read'),
 ]

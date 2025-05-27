@@ -2,9 +2,9 @@ from django.shortcuts import render
 from rest_framework import generics, permissions
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status
-from .serializers import UserSerializer, NoteSerializer, ServicesSerializer, ServiceQueueSerializer
+from .serializers import UserSerializer, NoteSerializer, ServicesSerializer, ServiceQueueSerializer, NotificationSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from .models import Note, Services, ServiceQueue
+from .models import Note, Services, ServiceQueue, Notification
 from .permissions import IsServiceProviderOrReadOnly
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
@@ -116,11 +116,17 @@ class QueueServiceView(APIView):
     def post(self, request, pk):
         service = get_object_or_404(Services, pk=pk)
 
-        # Check if already queued
         if ServiceQueue.objects.filter(service=service, user=request.user).exists():
             return Response({"detail": "You are already in the queue."}, status=status.HTTP_400_BAD_REQUEST)
 
         ServiceQueue.objects.create(service=service, user=request.user)
+
+        # Create notification for service creator
+        Notification.objects.create(
+            user=service.service_provider,
+            message=f'{request.user.username} has joined the queue for "{service.title}".'
+        )
+
         return Response({"detail": "You have joined the queue."}, status=status.HTTP_200_OK)
 
     def delete(self, request, pk):
@@ -131,8 +137,16 @@ class QueueServiceView(APIView):
             return Response({"detail": "The queue is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
         first_in_queue.delete()
+
+        # Notify the next user
+        next_in_queue = ServiceQueue.objects.filter(service=service).order_by('joined_at').first()
+        if next_in_queue:
+            Notification.objects.create(
+                user=next_in_queue.user,
+                message=f'It’s now your turn for "{service.title}". Please be ready!'
+            )
+
         return Response({"detail": f"The user {first_in_queue.user.username} is served and removed from the queue."}, status=status.HTTP_200_OK)
-    
 
 
 class LeaveQueueView(APIView):
@@ -154,3 +168,20 @@ class LeaveQueueView(APIView):
         # Remove user from the queue
         user_entry.delete()
         return Response({"detail": "You have left the queue."}, status=status.HTTP_200_OK)
+    
+
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+
+class NotificationMarkReadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        notification = get_object_or_404(Notification, pk=pk, user=request.user)
+        notification.is_read = True
+        notification.save()
+        return Response({"detail": "Notification marked as read."}, status=status.HTTP_200_OK)

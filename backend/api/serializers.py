@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Note, Services, ServiceQueue
+from .models import Note, Services, ServiceQueue, Notification
 
 User = get_user_model()
 
@@ -82,4 +82,10 @@ class ServicesSerializer(serializers.ModelSerializer):
                 'joined_at': first_entry.joined_at
             }
         return None
+    
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'message', 'created_at', 'is_read']
 
