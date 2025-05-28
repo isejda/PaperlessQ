@@ -1,0 +1,109 @@
+.service-list-container {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.service-list-title {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #222;
+  font-size: 1.8rem;
+}
+
+.no-services,
+.loading-text,
+.error-text {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error-text {
+  color: #d9534f;
+}
+
+.service-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.service-list-item {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  margin-bottom: 18px;
+  padding: 15px 20px;
+  border-radius: 6px;
+  transition: box-shadow 0.3s ease;
+}
+
+.service-list-item:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.service-title {
+  margin: 0 0 10px 0;
+  font-weight: 600;
+  color: #007bff;
+}
+
+.service-content {
+  margin: 0 0 12px 0;
+  color: #444;
+  white-space: pre-wrap;
+}
+
+.service-list-item small {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+button {
+  cursor: pointer;
+  padding: 7px 15px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Edit button style */
+button:first-of-type {
+  background-color: #17a2b8;
+  color: white;
+}
+
+button:first-of-type:hover:not(:disabled) {
+  background-color: #138496;
+}
+
+/* Inputs dhe textarea për edit */
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border: 1.5px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #007bff;
+  outline: none;
+}

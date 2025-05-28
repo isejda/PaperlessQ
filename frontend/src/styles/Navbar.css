@@ -1,0 +1,40 @@
+.navbar {
+  background-color: rgb(11, 11, 61);
+  padding: 1rem;
+}
+
+.navbar-list {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.navbar-list li {
+  color: white;
+}
+
+.navbar-list a {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.navbar-list a:hover,
+.active-link {
+  text-decoration: underline;
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  text-decoration: underline;
+}

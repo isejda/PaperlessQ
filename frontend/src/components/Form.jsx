@@ -1,61 +1,115 @@
 import { useState } from "react";
-import api from "../api";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { api, apiNoAuth } from "../api/api";
 import { useNavigate } from "react-router-dom";
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "../constants";
-import "../styles/Form.css"
+import "../styles/Form.css";
 import LoadingIndicator from "./LoadingIndicator";
 
 function Form({ route, method }) {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-    const name = method === "login" ? "Login" : "Register";
+  const name = method === "login" ? "Login" : "Register";
 
-    const handleSubmit = async (e) => {
-        setLoading(true);
-        e.preventDefault();
+  const formik = useFormik({
+    initialValues: {
+      username: "",
+      password: "",
+    },
+    validationSchema: Yup.object({
+      username: Yup.string()
+        .min(3, "Username must be at least 3 characters")
+        .required("Username is required"),
+      password: Yup.string()
+        .min(6, "Password must be at least 6 characters")
+        .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .matches(/[0-9]/, "Password must contain at least one number")
+        .matches(
+          /[!@#$%^&*(),.?":{}|<>]/,
+          "Password must contain at least one special character"
+        )
+        .required("Password is required"),
+    }),
 
-        try {
-            const res = await api.post(route, { username, password })
-            if (method === "login") {
-                localStorage.setItem(ACCESS_TOKEN, res.data.access);
-                localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
-                navigate("/")
-            } else {
-                navigate("/login")
-            }
-        } catch (error) {
-            alert(error)
-        } finally {
-            setLoading(false)
+    onSubmit: async (values) => {
+      setLoading(true);
+      try {
+        if (method === "login") {
+          const res = await api.post(route, values);
+          localStorage.setItem(ACCESS_TOKEN, res.data.access);
+          localStorage.setItem(REFRESH_TOKEN, res.data.refresh);
+          navigate("/dashboard");
+        } else {
+          const res = await apiNoAuth.post(route, values);
+          alert("Registration successful! You can now log in.");
+          navigate("/login");
         }
-    };
+      } catch (error) {
+        console.log("Error response:", error.response);
+        console.log("Error data:", error.response?.data);
 
-    return (
-        <form onSubmit={handleSubmit} className="form-container">
-            <h1>{name}</h1>
-            <input
-                className="form-input"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Username"
-            />
-            <input
-                className="form-input"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-            />
-            {loading && <LoadingIndicator />}
-            <button className="form-button" type="submit">
-                {name}
-            </button>
-        </form>
-    );
+        alert(
+          error.response?.data?.detail ||
+            "Something went wrong. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+  });
+
+  return (
+    <form onSubmit={formik.handleSubmit} className="form-container">
+      <h1>{name}</h1>
+
+      <input
+        className="form-input"
+        type="text"
+        name="username"
+        placeholder="Username"
+        value={formik.values.username}
+        onChange={formik.handleChange}
+        onBlur={formik.handleBlur}
+      />
+      {formik.touched.username && formik.errors.username && (
+        <div className="error">{formik.errors.username}</div>
+      )}
+
+      <input
+        className="form-input"
+        type="password"
+        name="password"
+        placeholder="Password"
+        value={formik.values.password}
+        onChange={formik.handleChange}
+        onBlur={formik.handleBlur}
+      />
+      {formik.touched.password && formik.errors.password && (
+        <div className="error">{formik.errors.password}</div>
+      )}
+
+      {loading && <LoadingIndicator />}
+      <button className="form-button" type="submit" disabled={loading}>
+        {name}
+      </button>
+
+      <div style={{ textAlign: "center", marginTop: "1rem" }}>
+        {method === "login" ? (
+          <p>
+            Don't have an account?{" "}
+            <span onClick={() => navigate("/register")}>Register here</span>
+          </p>
+        ) : (
+          <p>
+            Already have an account?{" "}
+            <span onClick={() => navigate("/login")}>Login here</span>
+          </p>
+        )}
+      </div>
+    </form>
+  );
 }
 
-export default Form
+export default Form;

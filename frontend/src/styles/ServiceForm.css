@@ -1,0 +1,74 @@
+.service-form-container {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 20px 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.service-form-container h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #333;
+}
+
+.service-form-container form div {
+  margin-bottom: 15px;
+}
+
+.service-form-container label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #444;
+}
+
+.service-form-container input[type="text"],
+.service-form-container textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1.5px solid #ccc;
+  border-radius: 5px;
+  transition: border-color 0.3s ease;
+}
+
+.service-form-container input[type="text"]:focus,
+.service-form-container textarea:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.service-form-container textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.service-form-container button {
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 0;
+  font-size: 18px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+.service-form-container button:hover {
+  background-color: #0056b3;
+}
+
+.service-form-container p {
+  margin-top: 20px;
+  text-align: center;
+  font-weight: 600;
+  color: #28a745; /* Success color */
+}
+
+.service-form-container p.error {
+  color: #dc3545; /* Error color */
+}
